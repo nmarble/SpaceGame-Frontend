@@ -4,7 +4,7 @@ const BASE_URL = 'http://localhost:8080/api';
 
 export async function loadOrbitData(canvasWidth, canvasHeight) {
     try {
-        const response = await fetch('http://localhost:8080/api/ships/positions/planet/{id}?id=6a4f33adc80b5c93971b69d2', {
+        const response = await fetch(`http://localhost:8080/api/ships/positions/planet/{id}?id=${state.selectedCelestial}`, {
             method: 'GET',
             credentials: 'include'
         });
@@ -18,9 +18,6 @@ export async function loadOrbitData(canvasWidth, canvasHeight) {
         state.shipOrbits = [];
         state.shipFrames = [];
 
-        // 2. Determine scale factor
-        // The raw numbers go up to ~6800. Let's scale them down so the orbit radius
-        // sits nicely on the screen (e.g., maximum radius of ~200 pixels).
         const maxRawValue = 6800;
         const targetRadiusPixels = Math.min(canvasWidth, canvasHeight) * 0.35;
         const scale = targetRadiusPixels / maxRawValue;
@@ -35,14 +32,11 @@ export async function loadOrbitData(canvasWidth, canvasHeight) {
             for (let i = 0; i < shipData.xCoordinates.length; i++) {
                 singleShipTrack.push({
                     x: shipData.xCoordinates[i] * scale,
-                    y: -shipData.yCoordinates[i] * scale // Safe Cartesian Y inversion
+                    y: -shipData.yCoordinates[i] * scale
                 });
             }
 
             state.shipOrbits.push(singleShipTrack);
-
-            // Stagger starting frames so ships don't stack directly on top of each other
-            // (e.g., Ship 0 starts at frame 0, Ship 1 starts at frame 40, etc.)
             state.shipFrames.push((index * 40) % singleShipTrack.length);
         });
 
@@ -56,7 +50,7 @@ export async function loadOrbitData(canvasWidth, canvasHeight) {
 
 export async function loadPlanetData() {
     try {
-        const response = await fetch('http://localhost:8080/api/planets/{id}?id=6a4f33adc80b5c93971b69d2', {
+        const response = await fetch(`http://localhost:8080/api/planets/{id}?id=${state.selectedCelestial}`, {
             credentials: 'include'
         });
         if (!response.ok) throw new Error(`HTTP error status: ${response.status}`);
@@ -75,5 +69,24 @@ export async function loadPlanetData() {
 
     } catch (error) {
         console.error("Failed to fetch planet details:", error);
+    }
+}
+
+export async function loadPlanetSummaries() {
+    try {
+        const response = await fetch('http://localhost:8080/api/planets/summaries', {
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error(`HTTP error status: ${response.status}`);
+
+        const data = await response.json();
+        state.planetsList = data; // Store the array directly
+
+        // Auto-select the first planet (Earth) if nothing is selected yet
+        if (!state.selectedPlanetId && data.length > 0) {
+            state.selectedPlanetId = data[0].id;
+        }
+    } catch (err) {
+        console.error("Failed to load planets list:", err);
     }
 }
