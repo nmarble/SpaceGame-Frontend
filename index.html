@@ -25,6 +25,39 @@
     <div id="app-container" class="hidden">
         <main id="game-viewport">
             <canvas id="gameCanvas"></canvas>
+            <button id="openTransferBtn" style="position: absolute; top: 20px; right: 20px; z-index: 10; padding: 10px 16px; font-weight: bold; cursor: pointer;">
+                Transfer Ship
+            </button>
+
+            <dialog id="transferDialog" style="border: none; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); padding: 24px; width: 340px; font-family: sans-serif;">
+                <h3 style="margin-top: 0;">Transfer Vessel</h3>
+
+                <form id="transferForm" style="display: flex; flex-direction: column; gap: 12px;">
+                    <label>
+                        Select Ship:
+                        <select id="vesselSelect" required style="width: 100%; padding: 6px; margin-top: 4px;"></select>
+                    </label>
+
+                    <label>
+                        Destination Planet Name:
+                        <input type="text" id="targetPlanetName" required placeholder="e.g. Jupiter" style="width: 95%; padding: 6px; margin-top: 4px;" />
+                    </label>
+
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 8px 0;" />
+                    <strong>New Orbital Metrics:</strong>
+
+                    <label>Semi-Major Axis: <input type="number" id="semiMajorAxis" step="0.0001" required value="0.1" style="width: 95%; padding: 4px;" /></label>
+                    <label>Eccentricity: <input type="number" id="eccentricity" step="0.0001" required value="0.1" style="width: 95%; padding: 4px;" /></label>
+                    <label>Mean Anomaly: <input type="number" id="meanAnomaly" step="0.0001" required value="0.1" style="width: 95%; padding: 4px;" /></label>
+                    <label>Longitude of Ascending Node: <input type="number" id="longitude" step="0.0001" required value="0.1" style="width: 95%; padding: 4px;" /></label>
+                    <label>Argument of Periapsis: <input type="number" id="periapsis" step="0.0001" required value="0.1" style="width: 95%; padding: 4px;" /></label>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px;">
+                        <button type="button" id="closeTransferBtn" style="padding: 6px 12px;">Cancel</button>
+                        <button type="submit" style="padding: 6px 12px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer;">Execute</button>
+                    </div>
+                </form>
+            </dialog>
         </main>
         <aside id="ui-dashboard">
             <section class="menu-card">

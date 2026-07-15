@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import {loadPlanetData, loadOrbitData, loadPlanetSummaries} from './api.js';
+import {loadPlanetData, loadOrbitData, loadPlanetSummaries, transferShip} from './api.js';
 import { resizeCanvas, renderGame } from './renderer.js';
 import './style.css'
 
@@ -12,6 +12,12 @@ const logoutBtn = document.getElementById('btn-logout');
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const cycleBtn = document.getElementById('cyclePlanetBtn');
+const dialog = document.getElementById('transferDialog');
+const openDialogBtn = document.getElementById('openTransferBtn');
+const closeDialogBtn = document.getElementById('closeTransferBtn');
+const form = document.getElementById('transferForm');
+const vesselSelect = document.getElementById('vesselSelect');
+const planetNameInput = document.getElementById('targetPlanetName');
 
 loginForm.addEventListener('submit', async(e) => {
     e.preventDefault();
@@ -44,6 +50,71 @@ loginForm.addEventListener('submit', async(e) => {
     } catch (error) {
         console.error("Connection failed:", error);
         loginError.classList.remove('hidden');
+    }
+});
+
+// 1. Open and Populate Window
+openDialogBtn.addEventListener('click', () => {
+    vesselSelect.innerHTML = ''; // Clear prior entries
+
+    // Populating dropdown based on currently rendered active ships
+    if (state.shipOrbits.length === 0) {
+        alert("No active vessels are currently mapped in this orbital sector.");
+        return;
+    }
+
+    state.shipIds.forEach(id => {
+        const option = document.createElement('option');
+        // Let's use simple indexes as placeholder labels for the select options
+        option.value = id;
+        option.textContent = id;
+        vesselSelect.appendChild(option);
+    });
+
+    dialog.showModal(); // Opens semantic backdrop modal safely
+});
+
+// 2. Close Window on Cancel
+closeDialogBtn.addEventListener('click', () => dialog.close());
+
+// 3. Form Submission Handler
+form.addEventListener('submit', async (event) => {
+    event.preventDefault(); // Stop raw browser navigation reload
+
+    const enteredPlanetName = planetNameInput.value.trim().toLowerCase();
+
+    // 🔍 AUTOMATIC TRANSLATION: Match entered string name with our state ID array
+    const targetPlanet = state.planetsList.find(
+        p => p.name.toLowerCase() === enteredPlanetName
+    );
+
+    if (!targetPlanet) {
+        alert(`Could not find celestial body matching "${planetNameInput.value}".`);
+        return;
+    }
+
+    // Prepare final JSON body
+    const submitData = {
+        id: vesselSelect.value, // Maps targeted vessel ID index selector
+        newLocationId: targetPlanet.id, // Target Planet's translated Mongo ID hash
+        newOrbit: {
+            semiMajorAxis: parseFloat(document.getElementById('semiMajorAxis').value),
+            eccentricity: parseFloat(document.getElementById('eccentricity').value),
+            meanAnomaly: parseFloat(document.getElementById('meanAnomaly').value),
+            longitudeOfAscendingNode: parseFloat(document.getElementById('longitude').value),
+            argumentOfPeriapsis: parseFloat(document.getElementById('periapsis').value)
+        }
+    };
+
+    console.log("Transmitting payload:", submitData);
+
+    const success = await transferShip(submitData);
+    if (success) {
+        dialog.close();
+        form.reset(); // Clear old values
+
+        // Refresh your screen's coordinate loops instantly if you moved a ship inside the current viewport
+        await loadOrbitData(canvas.width, canvas.height);
     }
 });
 

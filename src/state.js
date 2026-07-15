@@ -2,6 +2,7 @@ export const state = {
     isRunning: true,
     shipOrbits: [],
     shipFrames: [],
+    shipIds: [],
     planetsList: [],
     selectedCelestial: "6a4f33adc80b5c93971b69d2",
     celestialData: {

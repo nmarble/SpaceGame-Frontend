@@ -17,6 +17,7 @@ export async function loadOrbitData(canvasWidth, canvasHeight) {
         // Reset tracking structures
         state.shipOrbits = [];
         state.shipFrames = [];
+        state.shipIds = [];
 
         const maxRawValue = 6800;
         const targetRadiusPixels = Math.min(canvasWidth, canvasHeight) * 0.35;
@@ -32,10 +33,11 @@ export async function loadOrbitData(canvasWidth, canvasHeight) {
             for (let i = 0; i < shipData.xCoordinates.length; i++) {
                 singleShipTrack.push({
                     x: shipData.xCoordinates[i] * scale,
-                    y: -shipData.yCoordinates[i] * scale
+                    y: -shipData.yCoordinates[i] * scale,
                 });
             }
 
+            state.shipIds.push(shipData.id);
             state.shipOrbits.push(singleShipTrack);
             state.shipFrames.push((index * 40) % singleShipTrack.length);
         });
@@ -88,5 +90,28 @@ export async function loadPlanetSummaries() {
         }
     } catch (err) {
         console.error("Failed to load planets list:", err);
+    }
+}
+
+export async function transferShip(payload) {
+    try {
+        const response = await fetch(`http://localhost:8080/api/ships/command/move`, { // Ensure this matches your POST URL path
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Transfer failed: ${response.status}`);
+        }
+
+        return true;
+    } catch (err) {
+        console.error("Transmission Error:", err);
+        alert("Failed to process orbital transition: " + err.message);
+        return false;
     }
 }
